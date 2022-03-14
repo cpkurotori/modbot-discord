@@ -115,32 +115,61 @@ Prerequisites:
     1. Past the URL into `Interaction Endpoint URL` and click `Save Changes`
 
 
-## Build
-The build should be done when you are setting up or anytime the code changes and you
-want to deploy the new version.
+## Build, Stage and Promote
 
+If you use AWS Lambda, you can use the provided scripts in `pipeline` to assist with building, deploying to stage and promoting to production.
 
-1. Login to your docker registry:   
-    **AWS**: 
-    
-    `aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGION_URI}`
-1. Build the image and push:
-    ```bash
-    docker build -t modbot-discord .
-    docker tag modbot-discord:latest ${REGISTRY}:latest
-    docker push ${REGISTRY}:latest
-    ```
+Create a helper script (stored in `local` folder) like this bring all the helper scripts into one.
 
-## Deploy Image (AWS)
-This should be done anytime you push a new build
+`pipeline.sh`:
+```bash
+#!/usr/bin/env bash
 
-1. Go to your bot's AWS Lambda function
-1. Go to `Image`
-1. Click `Deploy new image`
-1. Select the latest build
-1. Click `Save`
-1. Wait for the status overlay bar to turn green and indicate that the update is complete
+set -e
 
-    <img src='imgs/updating_function.png' width=500 alt='updating function'>
+if [[ -z "$1" ]]; then
+echo "Usage: $0 <pipeline script without extension>"
+exit 1
+fi
 
-    <img src='imgs/update_complete.png' width=500 alt='update complete'>
+# Replace this with your CR Endpoint
+export CR_ENDPOINT="000000000.dkr.ecr.us-east-2.amazonaws.com"
+
+# Replace this with your CR Registry
+export CR_REGISTRY="modbot-discord"
+
+# Replace these with the names of your AWS Lambda Functions (they can be the same if you don't have a staging environment)
+export AWS_LAMBDA_FUNCTION_STAGE="modbot-stage"
+export AWS_LAMBDA_FUNCTION_PROD="modbot-prod"
+
+cd ../pipeline
+
+if ! test -f "$1.sh"; then
+    echo "$1 is not a valid pipeline script"
+    echo ""
+    echo "Available options:"
+    for file in *.sh; do
+    echo "- $( sed 's/\.sh//g' <<< ${file})"
+    done
+    exit 1
+fi
+
+"./$1.sh"
+```
+
+Then to build and push, run this:
+```
+# make executable (only need to do this the first time after creating file)
+chmod +x pipeline.sh
+./pipeline.sh build
+```
+
+Then to deploy to stage:
+```
+./pipeline.sh stage
+```
+
+And once you've tested it in stage and want to promote to production:
+```
+./pipeline.sh promote
+```
