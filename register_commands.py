@@ -1,7 +1,10 @@
 import requests
 import yaml
+import sys
 
-with open("config.yaml") as config_file:
+config_filepath = (len(sys.argv) > 1 and sys.argv[1]) or "config.yaml"
+
+with open(config_filepath) as config_file:
     config = yaml.load(config_file, yaml.SafeLoader)
 
 application_id = config["discord"]["bot"]["application_id"]
@@ -26,6 +29,8 @@ for guild in guilds:
     )
 
     command_resp = resp.json()
+
+    print(command_resp)
     command_id = command_resp["id"]
 
     create_permissions_body = {
