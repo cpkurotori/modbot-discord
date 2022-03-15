@@ -34,4 +34,5 @@ def check_authorized_guilds(guild_id):
     for guild in guilds:
         if guild_id.strip() == guild.strip():
             return
+    logger.warning(f"unauthorized guild: {guild_id}")
     raise HTTPError(401, "Unauthorized")

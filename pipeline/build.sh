@@ -6,7 +6,8 @@
 
 set -e
 
-# uncomment the next line if you need to login
+# uncomment the next lines if you get Forbidden/Unauthorized errors
+# aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 # aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ${CR_ENDPOINT}
 docker build -t ${CR_REGISTRY} ..
 docker tag modbot-discord:latest ${CR_ENDPOINT}/${CR_REGISTRY}:latest
